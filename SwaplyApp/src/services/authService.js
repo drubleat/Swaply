@@ -3,7 +3,7 @@ import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 
 // kullanici kaydi - sadece edu.tr maili kabul ediyor
-export const registerUser = async (email, password) => {
+export const registerUser = async (email, password, displayName = '') => {
     if (!email.endsWith('@edu.tr') && !email.includes('.edu.tr')) {
         throw new Error('Sadece .edu.tr uzantılı mail adresleri kabul edilir.');
     }
@@ -14,7 +14,7 @@ export const registerUser = async (email, password) => {
     await sendEmailVerification(user);
 
     await setDoc(doc(db, 'users', user.uid), {
-        displayName: '',
+        displayName: displayName,
         email: user.email,
         bio: '',
         photoURL: '',

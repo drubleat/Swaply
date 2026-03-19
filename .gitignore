@@ -1,1 +1,7 @@
 .DS_Store
+SwaplyApp/node_modules/
+SwaplyApp/.expo/
+node_modules/
+.expo/
+.DS_Store
+npm-debug.log*

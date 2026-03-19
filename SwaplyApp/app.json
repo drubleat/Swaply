@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Swaply",
+    "slug": "swaply",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#8B5CF6"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.swaply.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#8B5CF6"
+      },
+      "package": "com.swaply.app"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
