@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, deleteUser } from 'firebase/auth';
-import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 
 // kullanici kaydi - sadece edu.tr maili kabul ediyor
@@ -27,6 +27,20 @@ export const registerUser = async (email, password, displayName = '') => {
     });
 
     return user;
+};
+
+// profil guncelleme - kayit sonrasi profil bilgilerini yaziyoruz
+export const updateUserProfile = async (uid, profileData) => {
+    await updateDoc(doc(db, 'users', uid), {
+        displayName: profileData.displayName,
+        bio: profileData.bio || '',
+        skillsToTeach: profileData.skillsToTeach,
+        skillsToLearn: profileData.skillsToLearn,
+        location: profileData.location || { latitude: 0, longitude: 0 },
+        rating: 0,
+        swapCount: 0,
+        createdAt: serverTimestamp()
+    });
 };
 
 // giris
