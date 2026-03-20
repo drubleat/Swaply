@@ -41,7 +41,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       const user = await registerUser(email.trim(), password, name.trim());
       console.log('Kayit basarili:', user.uid);
-      navigation.navigate('ProfileSetup', { displayName: name.trim() });
+      navigation.navigate('Login');
     } catch (error) {
       console.log('Kayit hatasi:', error.message);
       Alert.alert('Kayıt Hatası', error.message);

@@ -5,13 +5,12 @@ import { getFirestore } from 'firebase/firestore';
 
 // firebase config bilgilerimiz
 const firebaseConfig = {
-  apiKey: "AIzaSyAPtcdIyPQTfLl4GgLa6At4dWe7VIhApDo",
-  authDomain: "swaply-aa22a.firebaseapp.com",
-  projectId: "swaply-aa22a",
-  storageBucket: "swaply-aa22a.firebasestorage.app",
-  messagingSenderId: "615979080184",
-  appId: "1:615979080184:web:c7fd8b34ce5855bbbd1e0d",
-  measurementId: "G-2KS9B8BVVD"
+  apiKey: "AIzaSyA4YJnDQOCuMjg3GbpkqqVoTgliAU45ZK4",
+  authDomain: "swaplylatest.firebaseapp.com",
+  projectId: "swaplylatest",
+  storageBucket: "swaplylatest.firebasestorage.app",
+  messagingSenderId: "18092993583",
+  appId: "1:18092993583:web:e5b9f413325652d4ddaada"
 };
 
 

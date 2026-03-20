@@ -26,7 +26,8 @@ export default function LoginScreen({ navigation }) {
     try {
       const user = await loginUser(email.trim(), password);
       console.log('Giris basarili:', user.uid);
-      // TODO: Navigate to HomeScreen
+      // giris sonrasi ana sayfaya yonlendir
+      navigation.navigate('ProfileSetup', { displayName: '' });
     } catch (error) {
       console.log('Giris hatasi:', error.message);
       Alert.alert('Giriş Hatası', error.message);

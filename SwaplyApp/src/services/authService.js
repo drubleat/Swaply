@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, deleteUser } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser } from 'firebase/auth';
 import { doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 
@@ -11,20 +11,25 @@ export const registerUser = async (email, password, displayName = '') => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    await sendEmailVerification(user);
 
-    await setDoc(doc(db, 'users', user.uid), {
-        displayName: displayName,
-        email: user.email,
-        bio: '',
-        photoURL: '',
-        skillsToTeach: [],
-        skillsToLearn: [],
-        location: { lat: 0, lng: 0 },
-        rating: 0,
-        ratingCount: 0,
-        fcmToken: ''
-    });
+
+    // kullanici belgesini olustur, firestore hazir degilse hata almasin
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            displayName: displayName,
+            email: user.email,
+            bio: '',
+            photoURL: '',
+            skillsToTeach: [],
+            skillsToLearn: [],
+            location: { lat: 0, lng: 0 },
+            rating: 0,
+            ratingCount: 0,
+            fcmToken: ''
+        });
+    } catch (e) {
+        console.log('firestore yazma hatasi:', e.message);
+    }
 
     return user;
 };
