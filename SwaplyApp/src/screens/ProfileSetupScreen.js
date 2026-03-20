@@ -88,7 +88,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
       console.log('Profil olusturuldu:', user.uid);
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Welcome' }],
+        routes: [{ name: 'MainTabs' }],
       });
       Alert.alert('Başarılı', 'Profil oluşturuldu!');
     } catch (error) {
