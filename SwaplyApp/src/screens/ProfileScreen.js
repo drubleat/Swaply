@@ -65,6 +65,13 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </View>
 
+      <TouchableOpacity 
+        style={styles.settingsButton}
+        onPress={() => navigation.navigate('Settings')}
+      >
+        <Text style={styles.settingsText}>⚙️ Ayarlar</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Çıkış Yap</Text>
       </TouchableOpacity>
@@ -165,6 +172,18 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontSize: 12,
     marginBottom: 30
+  },
+  settingsButton: {
+    margin: 20,
+    backgroundColor: '#F3F4F6',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center'
+  },
+  settingsText: {
+    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '600'
   }
 });
 

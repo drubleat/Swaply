@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, deleteUser } from 'firebase/auth';
-import { doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 
 // kullanici kaydi - sadece edu.tr maili kabul ediyor
@@ -60,11 +60,39 @@ export const logoutUser = async () => {
 };
 
 // hesap silme
-export const deleteAccount = async (uid) => {
-    await deleteDoc(doc(db, 'users', uid));
-
+export const deleteAccount = async () => {
+  try {
     const user = auth.currentUser;
-    if (user) {
-        await deleteUser(user);
+    if (!user) {
+      throw new Error('No user logged in');
     }
+
+    // Delete user document from Firestore
+    await deleteDoc(doc(db, 'users', user.uid));
+    
+    // Delete any user's matches (optional - for cleanup)
+    const matchesRef = collection(db, 'matches');
+    const q1 = query(matchesRef, where('userAId', '==', user.uid));
+    const q2 = query(matchesRef, where('userBId', '==', user.uid));
+    
+    const [snapshot1, snapshot2] = await Promise.all([
+      getDocs(q1),
+      getDocs(q2)
+    ]);
+    
+    const deletePromises = [];
+    snapshot1.docs.forEach(doc => deletePromises.push(deleteDoc(doc.ref)));
+    snapshot2.docs.forEach(doc => deletePromises.push(deleteDoc(doc.ref)));
+    
+    await Promise.all(deletePromises);
+    
+    // Delete Firebase Auth user
+    await user.delete();
+    
+    return { success: true };
+    
+  } catch (error) {
+    console.error('Delete account error:', error);
+    return { success: false, error: error.message };
+  }
 };
