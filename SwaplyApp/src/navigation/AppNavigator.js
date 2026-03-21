@@ -11,6 +11,10 @@ import AuthStack from './AuthStack';
 import MainTabs from './MainTabs';
 import ProfileSetupScreen from '../screens/ProfileSetupScreen';
 
+// Import modal/stack screens (pushed above tab bar)
+import ChatDetailScreen from '../screens/ChatDetailScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
+
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -60,14 +64,18 @@ const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!user ? (
-          // User not logged in → Show auth screens
+          // Giriş yapılmamış → Auth ekranları
           <Stack.Screen name="AuthStack" component={AuthStack} />
         ) : !hasProfile ? (
-          // User logged in but no profile → Show ProfileSetup
+          // Profil tamamlanmamış → Profil kurulumu
           <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
         ) : (
-          // User logged in with profile → Show main app
-          <Stack.Screen name="MainTabs" component={MainTabs} />
+          // Giriş yapılmış ve profil var → Ana uygulama
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
+            <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
