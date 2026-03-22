@@ -40,7 +40,7 @@ const ProfileScreen = ({ navigation }) => {
         </View>
         <Text style={styles.name}>{userData.displayName}</Text>
         <Text style={styles.email}>{userData.email}</Text>
-        <Text style={styles.rating}>⭐ {userData.rating || 0} · {userData.swapCount || 0} takas</Text>
+        <Text style={styles.rating}>⭐ {userData.rating || 0} · {userData.ratingCount || 0} değerlendirme · {userData.swapCount || 0} takas</Text>
       </View>
 
       <View style={styles.section}>
@@ -75,11 +75,6 @@ const ProfileScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Çıkış Yap</Text>
       </TouchableOpacity>
-
-      <Text style={styles.note}>
-        📝 Ayarlar ve profil düzenleme{'\n'}
-        Arda Burak ve Furkan tarafından eklenecek.
-      </Text>
     </ScrollView>
   );
 };

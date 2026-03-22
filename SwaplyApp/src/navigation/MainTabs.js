@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text, View, StyleSheet } from 'react-native';
 
 import DiscoverScreen from '../screens/DiscoverScreen';
+import MapScreen from '../screens/MapScreen';
+import MatchesScreen from '../screens/MatchesScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -41,6 +43,24 @@ const MainTabs = () => (
       options={{
         tabBarLabel: 'Keşfet',
         tabBarIcon: ({ focused }) => <TabIcon emoji="🔍" focused={focused} />,
+      }}
+    />
+
+    <Tab.Screen
+      name="Map"
+      component={MapScreen}
+      options={{
+        tabBarLabel: 'Harita',
+        tabBarIcon: ({ focused }) => <TabIcon emoji="🗺️" focused={focused} />,
+      }}
+    />
+
+    <Tab.Screen
+      name="Matches"
+      component={MatchesScreen}
+      options={{
+        tabBarLabel: 'Eşleşmeler',
+        tabBarIcon: ({ focused }) => <TabIcon emoji="✨" focused={focused} />,
       }}
     />
 

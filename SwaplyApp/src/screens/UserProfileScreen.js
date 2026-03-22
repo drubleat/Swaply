@@ -9,6 +9,8 @@ import {
 import { db, auth } from '../services/firebaseConfig';
 import { calculateDistance } from '../utils/locationUtils';
 import SkillChip from '../components/SkillChip';
+import { canRateUser } from '../services/ratingService';
+import { sendMatchRequest, checkExistingMatch } from '../services/matchService';
 
 const UserProfileScreen = ({ route, navigation }) => {
   const { userId } = route.params;
@@ -19,9 +21,26 @@ const UserProfileScreen = ({ route, navigation }) => {
   const [existingChatId, setExistingChatId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [chatLoading, setChatLoading] = useState(false);
+  const [canRate, setCanRate] = useState(false);
+  const [canMatch, setCanMatch] = useState(true);
+  const [matchLoading, setMatchLoading] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, [userId]);
+
+  useEffect(() => {
+    const checkPermissions = async () => {
+      try {
+        const rateAllowed = await canRateUser(currentUser.uid, userId);
+        setCanRate(rateAllowed);
+        const matchExists = await checkExistingMatch(currentUser.uid, userId);
+        setCanMatch(!matchExists);
+      } catch (e) {
+        console.log('Izin kontrol hatasi:', e.message);
+      }
+    };
+    checkPermissions();
   }, [userId]);
 
   const loadData = async () => {
@@ -69,7 +88,7 @@ const UserProfileScreen = ({ route, navigation }) => {
     return chatDoc.id;
   };
 
-  // Mesaj gönder / sohbeti aç
+  // mesaj gonder / sohbeti ac
   const handleMessagePress = async () => {
     setChatLoading(true);
     try {
@@ -90,7 +109,27 @@ const UserProfileScreen = ({ route, navigation }) => {
     }
   };
 
-  // Mesafe hesapla
+  const handleRatePress = () => {
+    navigation.navigate('Rating', {
+      userId: userId,
+      userName: profileUser.displayName,
+    });
+  };
+
+  const handleMatchRequest = async () => {
+    setMatchLoading(true);
+    try {
+      await sendMatchRequest(currentUser.uid, userId);
+      Alert.alert('Başarılı', 'Eşleşme isteği gönderildi!');
+      setCanMatch(false);
+    } catch (error) {
+      Alert.alert('Hata', error.message);
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+
   const getDistance = () => {
     if (!currentUserData?.location || !profileUser?.location) return null;
     const myLoc = currentUserData.location;
@@ -260,6 +299,29 @@ const UserProfileScreen = ({ route, navigation }) => {
 
       {/* Alt Aksiyon Butonu */}
       <View style={styles.actionBar}>
+        {canMatch && (
+          <TouchableOpacity
+            style={styles.matchBtn}
+            onPress={handleMatchRequest}
+            disabled={matchLoading}
+            activeOpacity={0.85}
+          >
+            {matchLoading ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={styles.matchBtnText}>✨ Eşleş</Text>
+            )}
+          </TouchableOpacity>
+        )}
+        {canRate && (
+          <TouchableOpacity
+            style={styles.rateBtn}
+            onPress={handleRatePress}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.rateBtnText}>⭐ Değerlendir</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.messageBtn, chatLoading && styles.messageBtnLoading]}
           onPress={handleMessagePress}
@@ -270,7 +332,7 @@ const UserProfileScreen = ({ route, navigation }) => {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <Text style={styles.messageBtnText}>
-              {existingChatId ? '💬  Sohbeti Aç' : '💬  Mesaj Gönder'}
+              {existingChatId ? '💬 Sohbet' : '💬 Mesaj'}
             </Text>
           )}
         </TouchableOpacity>
@@ -470,7 +532,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
 
-  // Alt mesaj buton alanı
+  // Alt mesaj buton alani
   actionBar: {
     position: 'absolute',
     bottom: 0,
@@ -482,8 +544,35 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  rateBtn: {
+    flex: 1,
+    backgroundColor: '#F59E0B',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  rateBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  matchBtn: {
+    flex: 1,
+    backgroundColor: '#10B981',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  matchBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
   messageBtn: {
+    flex: 1,
     backgroundColor: '#8B5CF6',
     borderRadius: 16,
     paddingVertical: 16,
@@ -493,6 +582,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+  },
+  messageBtnFull: {
+    flex: 2,
   },
   messageBtnLoading: {
     opacity: 0.75,

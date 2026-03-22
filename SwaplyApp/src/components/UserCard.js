@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { calculateDistance } from '../utils/locationUtils';
 
-const UserCard = ({ user, currentUserLocation, onPress }) => {
+const UserCard = ({ user, currentUserLocation, onPress, isMatched = false }) => {
   // Mesafeyi hesapla
   const getDistance = () => {
     if (!currentUserLocation || !user.location) return null;
@@ -42,6 +42,12 @@ const UserCard = ({ user, currentUserLocation, onPress }) => {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+      {/* eslesme rozeti */}
+      {isMatched && (
+        <View style={styles.matchBadge}>
+          <Text style={styles.matchBadgeText}>✨ Eşleşme</Text>
+        </View>
+      )}
       {/* Sol: Avatar */}
       <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
@@ -207,6 +213,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#374151',
     flex: 1,
+  },
+  matchBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#10B981',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    zIndex: 10,
+  },
+  matchBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
 

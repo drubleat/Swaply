@@ -87,7 +87,7 @@ const SettingsScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.item}
-            onPress={() => Alert.alert("Yakında", "Profil düzenleme 22 Mart'ta eklenecek (Furkan)")}
+            onPress={() => Alert.alert('Bilgi', 'Profil düzenleme özelliği yakında eklenecek')}
           >
             <Text style={styles.itemText}>Profili Düzenle</Text>
             <Text style={styles.itemArrow}>→</Text>
@@ -105,7 +105,7 @@ const SettingsScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.item}
-            onPress={() => Alert.alert('Yakında', 'Şifre değiştirme özelliği eklenecek')}
+            onPress={() => Alert.alert('Bilgi', 'Şifre değiştirme özelliği yakında eklenecek')}
           >
             <Text style={styles.itemText}>Şifremi Değiştir</Text>
             <Text style={styles.itemArrow}>→</Text>
@@ -113,7 +113,7 @@ const SettingsScreen = ({ navigation }) => {
 
           <TouchableOpacity 
             style={styles.item}
-            onPress={() => Alert.alert('Yakında', 'Gizlilik politikası eklenecek')}
+            onPress={() => Alert.alert('Bilgi', 'Gizlilik politikası hazırlanıyor')}
           >
             <Text style={styles.itemText}>Gizlilik Politikası</Text>
             <Text style={styles.itemArrow}>→</Text>

@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../services/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 // Import navigators
 import AuthStack from './AuthStack';
@@ -14,6 +14,8 @@ import ProfileSetupScreen from '../screens/ProfileSetupScreen';
 // Import modal/stack screens (pushed above tab bar)
 import ChatDetailScreen from '../screens/ChatDetailScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
+import RatingScreen from '../screens/RatingScreen';
+import MatchRequestsScreen from '../screens/MatchRequestsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,31 +25,34 @@ const AppNavigator = () => {
   const [hasProfile, setHasProfile] = useState(false);
 
   useEffect(() => {
-    // Listen to auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubscribeDoc = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      // onceki firestore dinleyiciyi temizle
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+        unsubscribeDoc = null;
+      }
+
       if (currentUser) {
-        // User is logged in, check if profile exists
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        
-        if (userDoc.exists()) {
-          // Profile exists, user can access main app
-          setUser(currentUser);
-          setHasProfile(true);
-        } else {
-          // No profile yet, need to complete ProfileSetup
-          setUser(currentUser);
-          setHasProfile(false);
-        }
+        setUser(currentUser);
+        // profil belgesi degisince otomatik guncelle
+        const userRef = doc(db, 'users', currentUser.uid);
+        unsubscribeDoc = onSnapshot(userRef, (snap) => {
+          setHasProfile(snap.exists());
+          setLoading(false);
+        });
       } else {
-        // User not logged in
         setUser(null);
         setHasProfile(false);
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
   }, []);
 
   if (loading) {
@@ -75,6 +80,8 @@ const AppNavigator = () => {
             <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+            <Stack.Screen name="Rating" component={RatingScreen} />
+            <Stack.Screen name="MatchRequests" component={MatchRequestsScreen} />
           </>
         )}
       </Stack.Navigator>

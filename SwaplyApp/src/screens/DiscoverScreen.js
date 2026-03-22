@@ -6,6 +6,8 @@ import {
 import * as Location from 'expo-location';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db, auth } from '../services/firebaseConfig';
+import { getMatchesForUser } from '../services/matchService';
+import { calculateDistance } from '../utils/locationUtils';
 import UserCard from '../components/UserCard';
 
 const CATEGORIES = [
@@ -19,6 +21,8 @@ const DiscoverScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [loading, setLoading] = useState(true);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [myMatches, setMyMatches] = useState([]);
+  const [maxDistance, setMaxDistance] = useState(null);
 
   // Konum al (izin isteme olmadan sessizce dene)
   useEffect(() => {
@@ -38,6 +42,21 @@ const DiscoverScreen = ({ navigation }) => {
   useEffect(() => {
     fetchUsers(selectedCategory);
   }, [selectedCategory]);
+
+  // match listesini yukle
+  useEffect(() => {
+    const loadMyMatches = async () => {
+      try {
+        const uid = auth.currentUser?.uid;
+        if (!uid) return;
+        const data = await getMatchesForUser(uid);
+        setMyMatches(data);
+      } catch (e) {
+        console.log('Match listesi yuklenemedi:', e.message);
+      }
+    };
+    loadMyMatches();
+  }, []);
 
   const fetchUsers = async (category) => {
     setLoading(true);
@@ -69,14 +88,29 @@ const DiscoverScreen = ({ navigation }) => {
     }
   };
 
-  // Arama filtresi (client-side)
+  // kart icin match kontrolu
+  const isMatched = (userId) =>
+    myMatches.some(m => m.user1 === userId || m.user2 === userId);
+
+  // arama + mesafe filtresi
   const filteredUsers = users.filter(user => {
-    if (!searchText.trim()) return true;
-    const text = searchText.toLowerCase();
-    const nameMatch = user.displayName?.toLowerCase().includes(text);
-    const skillMatch = user.skillsToTeach?.some(s => s.toLowerCase().includes(text));
-    const learnMatch = user.skillsToLearn?.some(s => s.toLowerCase().includes(text));
-    return nameMatch || skillMatch || learnMatch;
+    if (searchText.trim()) {
+      const text = searchText.toLowerCase();
+      const nameMatch = user.displayName?.toLowerCase().includes(text);
+      const skillMatch = user.skillsToTeach?.some(s => s.toLowerCase().includes(text));
+      const learnMatch = user.skillsToLearn?.some(s => s.toLowerCase().includes(text));
+      if (!nameMatch && !skillMatch && !learnMatch) return false;
+    }
+    if (maxDistance && currentLocation && user.location) {
+      const dist = calculateDistance(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        user.location.latitude ?? user.location.lat,
+        user.location.longitude ?? user.location.lng
+      );
+      if (dist > maxDistance) return false;
+    }
+    return true;
   });
 
   const handleCardPress = (user) => {
@@ -124,6 +158,23 @@ const DiscoverScreen = ({ navigation }) => {
         ))}
       </ScrollView>
 
+      {/* Mesafe filtresi */}
+      <View style={styles.distanceFilters}>
+        <Text style={styles.filterLabel}>Mesafe:</Text>
+        {[null, 3, 5, 10].map((dist) => (
+          <TouchableOpacity
+            key={dist || 'all'}
+            style={[styles.distChip, maxDistance === dist && styles.distChipActive]}
+            onPress={() => setMaxDistance(dist)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.distChipText, maxDistance === dist && styles.distChipTextActive]}>
+              {dist ? `${dist} km` : 'Tümü'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Sonuç sayısı */}
       {!loading && (
         <Text style={styles.resultsCount}>
@@ -154,7 +205,16 @@ const DiscoverScreen = ({ navigation }) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Keşfet</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Keşfet</Text>
+          <TouchableOpacity
+            style={styles.mapBtn}
+            onPress={() => navigation.navigate('Map')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.mapBtnText}>🗺️ Harita</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* İçerik */}
@@ -172,6 +232,7 @@ const DiscoverScreen = ({ navigation }) => {
               user={item}
               currentUserLocation={currentLocation}
               onPress={() => handleCardPress(item)}
+              isMatched={isMatched(item.id)}
             />
           )}
           ListHeaderComponent={renderHeader}
@@ -300,6 +361,52 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  mapBtn: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  mapBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  distanceFilters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    gap: 6,
+  },
+  filterLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  distChip: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  distChipActive: {
+    backgroundColor: '#8B5CF6',
+  },
+  distChipText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  distChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });
 

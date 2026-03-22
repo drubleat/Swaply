@@ -20,7 +20,13 @@
       "package": "com.swaply.app"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Swaply, yakınındaki yetenek sahiplerini bulmak için konumuna erişmek istiyor."
+        }
+      ]
     ]
   }
 }

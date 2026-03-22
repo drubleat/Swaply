@@ -6,6 +6,7 @@ import {
 import * as Location from 'expo-location';
 import { updateUserProfile } from '../services/authService';
 import { auth } from '../services/firebaseConfig';
+import { findMatches } from '../services/matchService';
 
 const SKILLS = [
   'Yazılım', 'Grafik Tasarım', 'Müzik', 'Spor',
@@ -86,11 +87,16 @@ export default function ProfileSetupScreen({ navigation, route }) {
 
       await updateUserProfile(user.uid, profileData);
       console.log('Profil olusturuldu:', user.uid);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs' }],
-      });
-      Alert.alert('Başarılı', 'Profil oluşturuldu!');
+
+      // profil kaydedilince esleme aramasini baslat
+      try {
+        const matches = await findMatches(user.uid);
+        console.log('Yeni eslesme sayisi:', matches.length);
+      } catch (matchErr) {
+        console.log('Match arama hatasi:', matchErr.message);
+      }
+
+      // AppNavigator onSnapshot ile otomatik MainTabs'a gecer
     } catch (error) {
       console.log('Profil hatasi:', error.message);
       Alert.alert('Hata', `Profil oluşturulurken hata: ${error.message}`);
