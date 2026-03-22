@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { db } from '../services/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { formatTimeAgo, formatTime } from '../utils/timeUtils';
+import Avatar from './Avatar';
 
 const ChatListItem = ({ chat, currentUserId, onPress }) => {
   const [otherUser, setOtherUser] = useState(null);
@@ -24,14 +25,6 @@ const ChatListItem = ({ chat, currentUserId, onPress }) => {
     } catch (e) {
       console.log('ChatListItem kullanici yuklenemedi:', e.message);
     }
-  };
-
-  // Avatar baş harfleri
-  const getInitials = (name) => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return parts[0][0].toUpperCase();
   };
 
   // Son mesajı kısalt
@@ -63,7 +56,9 @@ const ChatListItem = ({ chat, currentUserId, onPress }) => {
     // Yükleniyor placeholder
     return (
       <View style={styles.itemContainer}>
-        <View style={[styles.avatar, { backgroundColor: '#E5E7EB' }]} />
+        <View style={styles.avatarPlaceholderContainer}>
+          <Avatar photoURL={null} displayName="?" size={56} />
+        </View>
         <View style={styles.content}>
           <View style={styles.loadingLine} />
           <View style={[styles.loadingLine, { width: '60%', marginTop: 6 }]} />
@@ -75,8 +70,8 @@ const ChatListItem = ({ chat, currentUserId, onPress }) => {
   return (
     <TouchableOpacity style={styles.itemContainer} onPress={onPress} activeOpacity={0.7}>
       {/* Avatar */}
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{getInitials(otherUser.displayName)}</Text>
+      <View style={styles.avatarPlaceholderContainer}>
+        <Avatar photoURL={otherUser.photoURL} displayName={otherUser.displayName} size={56} />
       </View>
 
       {/* İçerik */}
@@ -120,19 +115,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
   },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#EDE9FE',
-    justifyContent: 'center',
-    alignItems: 'center',
+  avatarPlaceholderContainer: {
     marginRight: 14,
-  },
-  avatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#7C3AED',
   },
   content: {
     flex: 1,

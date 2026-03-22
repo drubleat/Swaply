@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { auth, db } from '../services/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { logoutUser } from '../services/authService';
+import Avatar from '../components/Avatar';
 
 const ProfileScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
@@ -33,11 +34,7 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {userData.displayName?.charAt(0) || '?'}
-          </Text>
-        </View>
+        <Avatar photoURL={userData.photoURL} displayName={userData.displayName} size={80} fontSize={32} />
         <Text style={styles.name}>{userData.displayName}</Text>
         <Text style={styles.email}>{userData.email}</Text>
         <Text style={styles.rating}>⭐ {userData.rating || 0} · {userData.ratingCount || 0} değerlendirme · {userData.swapCount || 0} takas</Text>

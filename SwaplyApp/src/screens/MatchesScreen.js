@@ -6,6 +6,7 @@ import {
 import { auth, db } from '../services/firebaseConfig';
 import { getMatchesForUser } from '../services/matchService';
 import { doc, getDoc } from 'firebase/firestore';
+import Avatar from '../components/Avatar';
 
 const MatchesScreen = ({ navigation }) => {
     const [matches, setMatches] = useState([]);
@@ -43,13 +44,6 @@ const MatchesScreen = ({ navigation }) => {
         }
     };
 
-    const getInitials = (name) => {
-        if (!name) return '?';
-        const parts = name.trim().split(' ');
-        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-        return parts[0][0].toUpperCase();
-    };
-
     const renderMatch = ({ item }) => {
         const { otherUser, skillOverlap } = item;
         return (
@@ -58,8 +52,8 @@ const MatchesScreen = ({ navigation }) => {
                 onPress={() => navigation.navigate('UserProfile', { userId: otherUser.id })}
                 activeOpacity={0.8}
             >
-                <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{getInitials(otherUser.displayName)}</Text>
+                <View style={styles.avatarContainer}>
+                    <Avatar photoURL={otherUser.photoURL} displayName={otherUser.displayName} size={50} fontSize={18} />
                 </View>
                 <View style={styles.info}>
                     <Text style={styles.name}>{otherUser.displayName}</Text>
@@ -151,21 +145,8 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
     },
-    avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: '#EDE9FE',
-        justifyContent: 'center',
-        alignItems: 'center',
+    avatarContainer: {
         marginRight: 12,
-        borderWidth: 1.5,
-        borderColor: '#C4B5FD',
-    },
-    avatarText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#7C3AED',
     },
     info: {
         flex: 1,

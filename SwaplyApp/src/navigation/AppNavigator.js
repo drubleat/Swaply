@@ -12,6 +12,7 @@ import MainTabs from './MainTabs';
 import ProfileSetupScreen from '../screens/ProfileSetupScreen';
 
 // Import modal/stack screens (pushed above tab bar)
+import EditProfileScreen from '../screens/EditProfileScreen';
 import ChatDetailScreen from '../screens/ChatDetailScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import RatingScreen from '../screens/RatingScreen';
@@ -82,6 +83,7 @@ const AppNavigator = () => {
             <Stack.Screen name="UserProfile" component={UserProfileScreen} />
             <Stack.Screen name="Rating" component={RatingScreen} />
             <Stack.Screen name="MatchRequests" component={MatchRequestsScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           </>
         )}
       </Stack.Navigator>

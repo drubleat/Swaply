@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '../services/firebaseConfig';
 import MessageBubble from '../components/MessageBubble';
+import Avatar from '../components/Avatar';
 
 const ChatDetailScreen = ({ route, navigation }) => {
   const { chatId, participants } = route.params;
@@ -91,14 +92,6 @@ const ChatDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  // İsim baş harfleri
-  const getInitials = (name) => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return parts[0][0].toUpperCase();
-  };
-
   const renderMessage = ({ item }) => (
     <MessageBubble message={item} currentUserId={currentUser.uid} />
   );
@@ -128,10 +121,8 @@ const ChatDetailScreen = ({ route, navigation }) => {
           onPress={() => otherUser && navigation.navigate('UserProfile', { userId: otherUser.id })}
           activeOpacity={0.7}
         >
-          <View style={styles.headerAvatar}>
-            <Text style={styles.headerAvatarText}>
-              {getInitials(otherUser?.displayName)}
-            </Text>
+          <View style={styles.headerAvatarContainer}>
+            <Avatar photoURL={otherUser?.photoURL} displayName={otherUser?.displayName} size={40} fontSize={15} />
           </View>
           <View>
             <Text style={styles.headerName} numberOfLines={1}>
@@ -237,20 +228,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#EDE9FE',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#C4B5FD',
-  },
-  headerAvatarText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#7C3AED',
+  headerAvatarContainer: {
+    marginRight: 4,
   },
   headerName: {
     fontSize: 16,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { calculateDistance } from '../utils/locationUtils';
+import Avatar from './Avatar';
 
 const UserCard = ({ user, currentUserLocation, onPress, isMatched = false }) => {
   // Mesafeyi hesapla
@@ -28,14 +29,6 @@ const UserCard = ({ user, currentUserLocation, onPress, isMatched = false }) => 
     return stars;
   };
 
-  // Avatar için baş harfler
-  const getInitials = (name) => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return parts[0][0].toUpperCase();
-  };
-
   const distance = getDistance();
   const teachSkills = user.skillsToTeach || [];
   const learnSkills = user.skillsToLearn || [];
@@ -50,9 +43,7 @@ const UserCard = ({ user, currentUserLocation, onPress, isMatched = false }) => 
       )}
       {/* Sol: Avatar */}
       <View style={styles.avatarContainer}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(user.displayName)}</Text>
-        </View>
+        <Avatar photoURL={user.photoURL} displayName={user.displayName} size={56} />
         {/* Online göstergesi (opsiyonel) */}
         <View style={styles.onlineIndicator} />
       </View>

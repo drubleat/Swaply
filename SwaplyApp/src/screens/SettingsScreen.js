@@ -87,7 +87,7 @@ const SettingsScreen = ({ navigation }) => {
           
           <TouchableOpacity 
             style={styles.item}
-            onPress={() => Alert.alert('Bilgi', 'Profil düzenleme özelliği yakında eklenecek')}
+            onPress={() => navigation.navigate('EditProfile')}
           >
             <Text style={styles.itemText}>Profili Düzenle</Text>
             <Text style={styles.itemArrow}>→</Text>

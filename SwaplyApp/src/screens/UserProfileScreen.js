@@ -9,6 +9,7 @@ import {
 import { db, auth } from '../services/firebaseConfig';
 import { calculateDistance } from '../utils/locationUtils';
 import SkillChip from '../components/SkillChip';
+import Avatar from '../components/Avatar';
 import { canRateUser } from '../services/ratingService';
 import { sendMatchRequest, checkExistingMatch } from '../services/matchService';
 
@@ -170,14 +171,6 @@ const UserProfileScreen = ({ route, navigation }) => {
     ));
   };
 
-  // İsim baş harfleri
-  const getInitials = (name) => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return parts[0][0].toUpperCase();
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -224,9 +217,7 @@ const UserProfileScreen = ({ route, navigation }) => {
         {/* Avatar & Kimlik */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarWrapper}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{getInitials(profileUser.displayName)}</Text>
-            </View>
+            <Avatar photoURL={profileUser.photoURL} displayName={profileUser.displayName} size={88} fontSize={32} />
             <View style={styles.onlineDot} />
           </View>
 
@@ -396,21 +387,6 @@ const styles = StyleSheet.create({
   avatarWrapper: {
     position: 'relative',
     marginBottom: 14,
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#EDE9FE',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#C4B5FD',
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#7C3AED',
   },
   onlineDot: {
     position: 'absolute',

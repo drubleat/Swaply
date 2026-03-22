@@ -6,6 +6,7 @@ import {
 import { auth, db } from '../services/firebaseConfig';
 import { getPendingMatchRequests, acceptMatchRequest, rejectMatchRequest } from '../services/matchService';
 import { doc, getDoc } from 'firebase/firestore';
+import Avatar from '../components/Avatar';
 
 const MatchRequestsScreen = ({ navigation }) => {
     const [requests, setRequests] = useState([]);
@@ -57,13 +58,6 @@ const MatchRequestsScreen = ({ navigation }) => {
         }
     };
 
-    const getInitials = (name) => {
-        if (!name) return '?';
-        const parts = name.trim().split(' ');
-        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-        return parts[0][0].toUpperCase();
-    };
-
     const renderRequest = ({ item }) => {
         const { fromUser } = item;
         return (
@@ -73,8 +67,8 @@ const MatchRequestsScreen = ({ navigation }) => {
                     activeOpacity={0.8}
                     style={styles.cardLeft}
                 >
-                    <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{getInitials(fromUser.displayName)}</Text>
+                    <View style={styles.avatarContainer}>
+                        <Avatar photoURL={fromUser.photoURL} displayName={fromUser.displayName} size={48} fontSize={18} />
                     </View>
                     <View style={styles.info}>
                         <Text style={styles.name}>{fromUser.displayName}</Text>
@@ -194,21 +188,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: '#EDE9FE',
-        justifyContent: 'center',
-        alignItems: 'center',
+    avatarContainer: {
         marginRight: 12,
-        borderWidth: 1.5,
-        borderColor: '#C4B5FD',
-    },
-    avatarText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#7C3AED',
     },
     info: {
         flex: 1,
