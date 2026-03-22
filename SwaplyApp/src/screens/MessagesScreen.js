@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  ActivityIndicator, StatusBar, SafeAreaView, TouchableOpacity
+  ActivityIndicator, StatusBar, SafeAreaView, TouchableOpacity, RefreshControl
 } from 'react-native';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db, auth } from '../services/firebaseConfig';
@@ -11,12 +11,31 @@ const MessagesScreen = ({ navigation }) => {
   const [chats, setChats] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [totalUnread, setTotalUnread] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const currentUser = auth.currentUser;
 
   useEffect(() => {
     fetchChats();
   }, []);
+
+  useEffect(() => {
+    const unreadCount = chats.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0);
+    setTotalUnread(unreadCount);
+  }, [chats]);
+
+  useEffect(() => {
+    navigation.setOptions({
+        tabBarBadge: totalUnread > 0 ? totalUnread : null,
+    });
+  }, [totalUnread]);
+
+  const onRefresh = async () => {
+      setRefreshing(true);
+      await fetchChats();
+      setRefreshing(false);
+  };
 
   const fetchChats = async () => {
     if (!currentUser) return;
@@ -129,6 +148,14 @@ const MessagesScreen = ({ navigation }) => {
           contentContainerStyle={filteredChats.length === 0 ? styles.emptyList : null}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+              <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#8B5CF6"
+                  colors={['#8B5CF6']}
+              />
+          }
         />
       )}
     </SafeAreaView>

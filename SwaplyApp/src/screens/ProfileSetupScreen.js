@@ -9,8 +9,36 @@ import { auth } from '../services/firebaseConfig';
 import { findMatches } from '../services/matchService';
 
 const SKILLS = [
-  'Yazılım', 'Grafik Tasarım', 'Müzik', 'Spor',
-  'Yabancı Dil', 'Matematik', 'Fotoğrafçılık', 'Video Düzenleme'
+    // Akademik
+    'Yazılım', 'Matematik', 'Fizik', 'Kimya', 'Biyoloji',
+    
+    // Sanat & Tasarım
+    'Grafik Tasarım', 'Resim', 'Fotoğrafçılık', 'Video Düzenleme',
+    'Animasyon', '3D Modelleme', 'UI/UX Design',
+    
+    // Müzik
+    'Gitar', 'Piyano', 'Davul', 'Vokal', 'Müzik Prodüksiyonu',
+    
+    // Spor
+    'Fitness', 'Yoga', 'Yüzme', 'Basketbol', 'Futbol', 'Voleybol',
+    'Tenis', 'Koşu',
+    
+    // Dil
+    'İngilizce', 'Almanca', 'Fransızca', 'İspanyolca', 'Japonca',
+    'Korece', 'Arapça', 'Rusça',
+    
+    // Hobi & El İşi
+    'Yemek Pişirme', 'Pasta Yapımı', 'Kahve Sanatı',
+    'Dans', 'Satranç', 'Dikiş', 'Örgü', 'El Sanatları',
+    'Marangozlık', 'Bahçecilik',
+    
+    // Dijital & Medya
+    'Sosyal Medya Yönetimi', 'İçerik Üretimi', 'Podcast Prodüksiyonu',
+    'Ses Mühendisliği',
+    
+    // İş & Kariyer
+    'Sunum Teknikleri', 'Liderlik', 'Girişimcilik', 'Pazarlama',
+    'Muhasebe', 'Excel',
 ];
 
 export default function ProfileSetupScreen({ navigation, route }) {
@@ -24,6 +52,7 @@ export default function ProfileSetupScreen({ navigation, route }) {
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState(null); // 'granted' | 'denied'
   const [loading, setLoading] = useState(false);
+  const [customSkillInput, setCustomSkillInput] = useState('');
 
   // TODO: Add profile image upload later
 
@@ -37,6 +66,41 @@ export default function ProfileSetupScreen({ navigation, route }) {
         prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
       );
     }
+  };
+
+  const addCustomSkill = (type) => {
+    const skill = customSkillInput.trim();
+    
+    if (!skill) {
+        Alert.alert('Hata', 'Yetenek adı boş olamaz');
+        return;
+    }
+    
+    if (skill.length < 2) {
+        Alert.alert('Hata', 'En az 2 karakter olmalı');
+        return;
+    }
+    
+    if (skill.length > 25) {
+        Alert.alert('Hata', 'Maksimum 25 karakter');
+        return;
+    }
+    
+    if (type === 'teach') {
+        if (selectedTeachSkills.includes(skill)) {
+            Alert.alert('Hata', 'Bu yetenek zaten ekli');
+            return;
+        }
+        setSelectedTeachSkills(prev => [...prev, skill]);
+    } else {
+        if (selectedLearnSkills.includes(skill)) {
+            Alert.alert('Hata', 'Bu yetenek zaten ekli');
+            return;
+        }
+        setSelectedLearnSkills(prev => [...prev, skill]);
+    }
+    
+    setCustomSkillInput('');
   };
 
   const getLocation = async () => {
@@ -214,6 +278,34 @@ export default function ProfileSetupScreen({ navigation, route }) {
         <Text style={styles.sectionLabel}>ÖĞRENMEK İSTEDİĞİM YETENEKLER</Text>
         {selectedLearnSkills.length > 0 && renderSelectedChips(selectedLearnSkills, 'learn')}
         {renderSelectableChips(selectedLearnSkills, 'learn')}
+
+        <View style={styles.customSkillContainer}>
+            <TextInput
+                style={styles.customSkillInput}
+                placeholder="+ Özel yetenek ekle"
+                placeholderTextColor="#9CA3AF"
+                value={customSkillInput}
+                onChangeText={setCustomSkillInput}
+                maxLength={25}
+            />
+            <TouchableOpacity
+                style={styles.addSkillBtn}
+                onPress={() => {
+                    Alert.alert(
+                        'Nereye Eklensin?',
+                        customSkillInput.trim(),
+                        [
+                            { text: 'İptal', style: 'cancel' },
+                            { text: 'Öğretebileceğim', onPress: () => addCustomSkill('teach') },
+                            { text: 'Öğrenmek İstediğim', onPress: () => addCustomSkill('learn') },
+                        ]
+                    );
+                }}
+                disabled={!customSkillInput.trim()}
+            >
+                <Text style={styles.addSkillBtnText}>Ekle</Text>
+            </TouchableOpacity>
+        </View>
 
         {/* Location */}
         <Text style={styles.sectionLabel}>KONUM</Text>
@@ -409,6 +501,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#7C3AED',
     fontWeight: '600',
+  },
+  customSkillContainer: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 12,
+  },
+  customSkillInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      borderRadius: 12,
+      padding: 12,
+      fontSize: 15,
+      color: '#1F2937',
+      backgroundColor: '#FFFFFF',
+  },
+  addSkillBtn: {
+      backgroundColor: '#8B5CF6',
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      justifyContent: 'center',
+  },
+  addSkillBtnText: {
+      color: '#FFFFFF',
+      fontSize: 15,
+      fontWeight: '600',
   },
   locationButton: {
     borderWidth: 1.5,

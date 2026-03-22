@@ -4,13 +4,21 @@ import { auth, db } from '../services/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { logoutUser } from '../services/authService';
 import Avatar from '../components/Avatar';
+import { getMatchesForUser } from '../services/matchService';
 
 const ProfileScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
+  const [matchCount, setMatchCount] = useState(0);
 
   useEffect(() => {
     loadUserData();
+    loadMatchCount();
   }, []);
+
+  const loadMatchCount = async () => {
+    const matches = await getMatchesForUser(auth.currentUser.uid);
+    setMatchCount(matches.length);
+  };
 
   const loadUserData = async () => {
     const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
@@ -37,7 +45,45 @@ const ProfileScreen = ({ navigation }) => {
         <Avatar photoURL={userData.photoURL} displayName={userData.displayName} size={80} fontSize={32} />
         <Text style={styles.name}>{userData.displayName}</Text>
         <Text style={styles.email}>{userData.email}</Text>
-        <Text style={styles.rating}>⭐ {userData.rating || 0} · {userData.ratingCount || 0} değerlendirme · {userData.swapCount || 0} takas</Text>
+        <Text style={styles.rating}>⭐ {userData.rating || 0} · {userData.ratingCount || 0} değerlendirme</Text>
+        
+        <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+                <Text style={styles.statValue}>{userData.swapCount || 0}</Text>
+                <Text style={styles.statLabel}>TAKAS</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+                <Text style={styles.statValue}>{matchCount}</Text>
+                <Text style={styles.statLabel}>EŞLEŞME</Text>
+            </View>
+        </View>
+      </View>
+
+      <View style={styles.quickActions}>
+          <TouchableOpacity 
+              style={styles.actionBtn}
+              onPress={() => navigation.navigate('EditProfile')}
+          >
+              <Text style={styles.actionIcon}>✏️</Text>
+              <Text style={styles.actionText}>Düzenle</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+              style={styles.actionBtn}
+              onPress={() => navigation.navigate('Discover')}
+          >
+              <Text style={styles.actionIcon}>🔍</Text>
+              <Text style={styles.actionText}>Keşfet</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+              style={styles.actionBtn}
+              onPress={() => navigation.navigate('Settings')}
+          >
+              <Text style={styles.actionIcon}>⚙️</Text>
+              <Text style={styles.actionText}>Ayarlar</Text>
+          </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -61,13 +107,6 @@ const ProfileScreen = ({ navigation }) => {
           ))}
         </View>
       </View>
-
-      <TouchableOpacity 
-        style={styles.settingsButton}
-        onPress={() => navigation.navigate('Settings')}
-      >
-        <Text style={styles.settingsText}>⚙️ Ayarlar</Text>
-      </TouchableOpacity>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Çıkış Yap</Text>
@@ -165,17 +204,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 30
   },
-  settingsButton: {
-    margin: 20,
-    backgroundColor: '#F3F4F6',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center'
+  statsRow: {
+    flexDirection: 'row',
+    marginTop: 16,
+    paddingHorizontal: 40,
+    width: '100%',
+    justifyContent: 'center',
+    gap: 32,
   },
-  settingsText: {
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#1F2937',
-    fontSize: 16,
-    fontWeight: '600'
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: '#E5E7EB',
+    height: '100%',
+  },
+  quickActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#E5E7EB',
+  },
+  actionBtn: {
+      alignItems: 'center',
+      gap: 6,
+  },
+  actionIcon: {
+      fontSize: 24,
+  },
+  actionText: {
+      fontSize: 12,
+      color: '#6B7280',
+      fontWeight: '500',
   }
 });
 

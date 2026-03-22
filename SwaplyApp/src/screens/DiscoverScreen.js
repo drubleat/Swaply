@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, SafeAreaView
+  ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, SafeAreaView,
+  RefreshControl
 } from 'react-native';
 import * as Location from 'expo-location';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
@@ -9,6 +10,9 @@ import { db, auth } from '../services/firebaseConfig';
 import { getMatchesForUser } from '../services/matchService';
 import { calculateDistance } from '../utils/locationUtils';
 import UserCard from '../components/UserCard';
+import { getUnreadMatchCount } from '../services/notificationService';
+import { saveSearchTerm, getSearchHistory } from '../utils/searchHistory';
+import UserCardSkeleton from '../components/UserCardSkeleton';
 
 const CATEGORIES = [
   'Tümü', 'Yazılım', 'Grafik Tasarım', 'Müzik',
@@ -23,6 +27,9 @@ const DiscoverScreen = ({ navigation }) => {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [myMatches, setMyMatches] = useState([]);
   const [maxDistance, setMaxDistance] = useState(null);
+  const [unreadMatchCount, setUnreadMatchCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
 
   // Konum al (izin isteme olmadan sessizce dene)
   useEffect(() => {
@@ -42,6 +49,48 @@ const DiscoverScreen = ({ navigation }) => {
   useEffect(() => {
     fetchUsers(selectedCategory);
   }, [selectedCategory]);
+
+  useEffect(() => {
+    loadUnreadMatches();
+    loadSearchHistory();
+  }, []);
+
+  const loadUnreadMatches = async () => {
+    const count = await getUnreadMatchCount(auth.currentUser?.uid);
+    setUnreadMatchCount(count);
+    
+    navigation.setOptions({
+        tabBarBadge: count > 0 ? count : null,
+    });
+  };
+
+  const loadSearchHistory = async () => {
+    const history = await getSearchHistory();
+    setSearchHistory(history);
+  };
+
+  // refresh after viewing
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+        loadUnreadMatches();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUsers(selectedCategory);
+    await loadUnreadMatches();
+    setRefreshing(false);
+  };
+
+  const handleSearch = async (text) => {
+    setSearchText(text);
+    if (text.trim().length > 2) {
+        await saveSearchTerm(text.trim());
+        await loadSearchHistory();
+    }
+  };
 
   // match listesini yukle
   useEffect(() => {
@@ -128,7 +177,7 @@ const DiscoverScreen = ({ navigation }) => {
           placeholder="Beceri veya kullanıcı ara..."
           placeholderTextColor="#9CA3AF"
           value={searchText}
-          onChangeText={setSearchText}
+          onChangeText={handleSearch}
           autoCorrect={false}
         />
         {searchText.length > 0 && (
@@ -137,6 +186,21 @@ const DiscoverScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
       </View>
+
+      {searchText === '' && searchHistory.length > 0 && (
+          <View style={styles.searchHistoryContainer}>
+              {searchHistory.map((term, index) => (
+                  <TouchableOpacity
+                      key={index}
+                      style={styles.historyItem}
+                      onPress={() => setSearchText(term)}
+                  >
+                      <Text style={styles.historyIcon}>🕐</Text>
+                      <Text style={styles.historyText}>{term}</Text>
+                  </TouchableOpacity>
+              ))}
+          </View>
+      )}
 
       {/* Kategori filtreleri */}
       <ScrollView
@@ -186,16 +250,53 @@ const DiscoverScreen = ({ navigation }) => {
 
   const renderEmpty = () => {
     if (loading) return null;
+    
+    const isSearching = searchText.trim().length > 0;
+    const isFiltered = selectedCategory !== 'Tümü';
+    
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyIcon}>🔍</Text>
-        <Text style={styles.emptyTitle}>Sonuç bulunamadı</Text>
-        <Text style={styles.emptySubtitle}>
-          {searchText
-            ? `"${searchText}" aramasına uygun kimse yok`
-            : `"${selectedCategory}" kategorisinde henüz kimse yok`}
-        </Text>
-      </View>
+        <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>
+                {isSearching ? '🔍' : isFiltered ? '📂' : '🌟'}
+            </Text>
+            <Text style={styles.emptyTitle}>
+                {isSearching 
+                    ? 'Sonuç Bulunamadı' 
+                    : isFiltered 
+                        ? 'Bu Kategoride Kimse Yok'
+                        : 'Henüz Kullanıcı Yok'}
+            </Text>
+            <Text style={styles.emptySubtitle}>
+                {isSearching 
+                    ? `"${searchText}" aramasına uygun kimse yok. Farklı kelimeler dene.`
+                    : isFiltered
+                        ? `"${selectedCategory}" kategorisinde henüz kimse yok. Başka kategorilere bak.`
+                        : 'Arkadaşlarını davet et ve yeteneklerini paylaş!'}
+            </Text>
+            
+            {(isSearching || isFiltered) && (
+                <TouchableOpacity
+                    style={styles.clearFiltersBtn}
+                    onPress={() => {
+                        setSearchText('');
+                        setSelectedCategory('Tümü');
+                    }}
+                >
+                    <Text style={styles.clearFiltersBtnText}>Filtreleri Temizle</Text>
+                </TouchableOpacity>
+            )}
+        </View>
+    );
+  };
+
+  const renderFooter = () => {
+    if (!loading) return null;
+    return (
+        <View style={{ marginTop: 16 }}>
+            <UserCardSkeleton />
+            <UserCardSkeleton />
+            <UserCardSkeleton />
+        </View>
     );
   };
 
@@ -237,9 +338,18 @@ const DiscoverScreen = ({ navigation }) => {
           )}
           ListHeaderComponent={renderHeader}
           ListEmptyComponent={renderEmpty}
+          ListFooterComponent={renderFooter}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+              <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#8B5CF6"
+                  colors={['#8B5CF6']}
+              />
+          }
         />
       )}
     </SafeAreaView>
@@ -407,6 +517,34 @@ const styles = StyleSheet.create({
   distChipTextActive: {
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  clearFiltersBtn: {
+      backgroundColor: '#8B5CF6',
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 12,
+      marginTop: 16,
+  },
+  clearFiltersBtnText: {
+      color: '#FFFFFF',
+      fontSize: 15,
+      fontWeight: '600',
+  },
+  searchHistoryContainer: {
+      paddingHorizontal: 16,
+      marginBottom: 12,
+  },
+  historyItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+  },
+  historyIcon: {
+      marginRight: 8,
+  },
+  historyText: {
+      color: '#4B5563',
+      fontSize: 14,
   },
 });
 

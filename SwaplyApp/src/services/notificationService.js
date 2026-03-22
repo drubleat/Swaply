@@ -29,3 +29,29 @@ export const markMatchAsNotified = async (matchId) => {
         notified: true
     });
 };
+
+// unread match sayısı
+export const getUnreadMatchCount = async (userId) => {
+    try {
+        const matchesRef = collection(db, 'matches');
+        
+        const q1 = query(
+            matchesRef,
+            where('user1', '==', userId),
+            where('notified', '==', false)
+        );
+        
+        const q2 = query(
+            matchesRef,
+            where('user2', '==', userId),
+            where('notified', '==', false)
+        );
+        
+        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        
+        return snap1.size + snap2.size;
+    } catch (error) {
+        console.log('Unread match count hatası:', error.message);
+        return 0;
+    }
+};
