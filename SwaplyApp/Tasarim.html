@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Swaply Design Patterns PA2</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 2rem; color: #333; }
+    h1, h2, h3, h4 { border-bottom: 1px solid #eaecef; padding-bottom: 0.3em; margin-top: 1.5em; }
+    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    th, td { padding: 8px 13px; border: 1px solid #dfe2e5; text-align: left; }
+    th { background-color: #f6f8fa; }
+    .mermaid-img { display: block; margin: 2em auto; max-width: 100%; height: auto; background: #fff; padding: 1em; border-radius: 8px; border: 1px solid #eaecef; }
+    @media print { body { padding: 0; max-width: 100%; } }
+  </style>
+</head>
+<body>
+
+<h1>TOBB UNIVERSITY OF ECONOMICS AND TECHNOLOGY</h1>
+<h2>DEPARTMENT OF COMPUTER ENGINEERING</h2>
+<h3>BİL 481 – SOFTWARE ENGINEERING PROJECT</h3>
+
+<p><strong>ASSIGNMENT 2 (PA2 Part 2): DESIGN PATTERNS ADDENDUM</strong><br>
+<strong>PROJECT NAME:</strong> SWAPLY</p>
+
+<p><strong>AUTHORS:</strong><br>
+- Arda Burak Zararsız<br>
+- Yusuf Çakır<br>
+- Yusuf Enes Kütük<br>
+- Eren Öz<br>
+- Furkan Yılmaz</p>
+
+<p><strong>DATE:</strong> 29.03.2026</p>
+
+<hr>
+
+<h2>Task Matrix</h2>
+
+<table>
+  <thead><tr><th>Task</th><th>Responsible Member</th></tr></thead>
+  <tbody>
+    <tr><td>Problem Identification &amp; Pattern Selection</td><td>Eren Öz, Arda Burak Zararsız</td></tr>
+    <tr><td>Observer Pattern — Design &amp; UML</td><td>Yusuf Enes Kütük, Furkan Yılmaz</td></tr>
+    <tr><td>Repository Pattern — Design &amp; UML</td><td>Yusuf Çakır, Eren Öz</td></tr>
+    <tr><td>Quality Factors &amp; Criteria Analysis</td><td>Arda Burak Zararsız, Furkan Yılmaz</td></tr>
+    <tr><td>Document Formatting &amp; Final Review</td><td>Eren Öz, Arda Burak Zararsız</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>Table of Contents</h2>
+<ol>
+  <li>Introduction</li>
+  <li>Design Pattern 1: Observer Pattern</li>
+  <li>Design Pattern 2: Repository Pattern</li>
+  <li>Summary of Design Pattern Decisions</li>
+</ol>
+
+<hr>
+
+<h2>1. Introduction</h2>
+<p>This document is an addendum to the Swaply Software Design Document (SDD) submitted on 05.03.2026. As the final phase of the design process, two design problems identified within the existing architecture are addressed by applying formal software design patterns. For each pattern, this document explains: (1) the problem it solves, (2) how it is applied in the Swaply architecture, (3) how the UML class diagrams are updated, and (4) the associated design decisions including quality factors and quality criteria.</p>
+
+<hr>
+
+<h2>2. Design Pattern 1: Observer Pattern</h2>
+
+<h3>2.1 Problem Identified</h3>
+<p>In the original design, both the Real-Time Chat (FR4) and the Skill-Based Match Notification (FR3) features relied on ad-hoc Firestore <code>onSnapshot</code> calls scattered directly inside screen components (<code>ChatScreen</code>, <code>MapScreen</code>). This created a tight coupling between the UI layer and the data-listening logic. Specifically:
+<ul>
+  <li><code>ChatScreen</code> directly contained the Firestore <code>onSnapshot</code> listener for messages.</li>
+  <li><code>MapScreen</code> independently queried Firestore for nearby matches without any shared notification contract.</li>
+  <li>Adding a new screen that also needs to react to match events would require duplicating listener code.</li>
+  <li>Unit-testing notification behaviour was impossible without rendering full React Native screen components.</li>
+</ul>
+This is a classic 'many screens react to the same data event' problem — precisely the scenario the Observer pattern is designed to solve.</p>
+
+<h3>2.2 Pattern Overview</h3>
+<ul>
+  <li><strong>Pattern Name:</strong> Observer</li>
+  <li><strong>GoF Category:</strong> Behavioral</li>
+  <li><strong>Intent:</strong> Define a one-to-many dependency so that when one object changes state, all dependents are notified and updated automatically.</li>
+  <li><strong>Applied To:</strong> FR3 (Match Notifications) and FR4 (Real-Time Chat)</li>
+</ul>
+
+<h3>2.3 Application in Swaply Architecture</h3>
+<p>A new service module, <code>MatchNotificationService.js</code>, is introduced in the <code>/src/services/</code> layer. It manages a list of subscribers (observers) and owns the single Firestore <code>onSnapshot</code> listener. UI screen components no longer call Firestore directly; instead they register themselves as observers.<br><br>
+<strong>Architecture change summary:</strong>
+<ul>
+  <li><strong>Before:</strong> <code>ChatScreen</code> → Firestore (direct <code>onSnapshot</code> call inside component).</li>
+  <li><strong>After:</strong> <code>ChatScreen</code> → <code>MatchNotificationService</code> → Firestore. <code>ChatScreen</code> acts as an observer and subscribes to the service via a standard Javascript event interface.</li>
+  <li>The same <code>MatchNotificationService</code> also notifies FCM (push notification dispatch) when a new match document is created, keeping all notification logic centralized.</li>
+  <li><code>MapScreen</code> acts as an observer to react to new nearby matches without owning any Firestore listener.</li>
+</ul></p>
+
+<h3>2.4 Updated UML Class Diagram</h3>
+
+<img class="mermaid-img" src="designs/observer_uml.svg" alt="Observer UML" />
+<p><em>Relationship: <code>MatchNotificationService</code> acts as the Subject. <code>ChatScreenObserver</code> and <code>MapScreenObserver</code> implement the <code>IMatchObserver</code> behavior.</em></p>
+
+<h3>2.5 Design Decision</h3>
+<p><strong>Why Observer was chosen:</strong><br>
+The Swaply application has multiple screens that must react to the same Firestore events. Without a formal pattern, each screen maintains its own listener, leading to resource waste and code duplication. The Observer pattern provides a single listener that fans out to registered screens, reducing Firestore read costs and isolating the change-detection logic from the UI.</p>
+
+<p><strong>Architectural location:</strong><br>
+The Subject (<code>MatchNotificationService.js</code>) lives in <code>/src/services/</code>. Concrete observer implementations are co-located with their respective screen components in <code>/src/screens/</code> to keep screen-specific reaction logic close to the view.</p>
+
+<table>
+  <thead><tr><th>Quality Factor</th><th>Metric / Criteria</th><th>Target Value</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Maintainability</strong></td><td>Adding a new screen that reacts to match events requires only subscribing the observer — zero changes to existing classes.</td><td>Cyclomatic complexity per function &lt; 10 (ESLint).</td></tr>
+    <tr><td><strong>Performance</strong></td><td>Single Firestore <code>onSnapshot</code> listener shared by all observers instead of N separate listeners.</td><td>≤ 1 active snapshot listener per collection at runtime.</td></tr>
+    <tr><td><strong>Testability</strong></td><td>Service can be unit-tested by injecting a mock observer function without any React Native rendering.</td><td>100% of service methods covered by Jest unit tests.</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>3. Design Pattern 2: Repository Pattern</h2>
+
+<h3>3.1 Problem Identified</h3>
+<p>In the original design, Firebase/Firestore API calls (<code>getUserById</code>, <code>findMatches</code>, <code>submitRating</code>, <code>deleteUser</code>) were made directly inside screen components and isolated service files without a consistent abstraction layer. This caused:
+<ul>
+  <li>Screen components (e.g., <code>ProfileScreen</code>, <code>DiscoverScreen</code>) indirectly depending on the concrete cloud provider details.</li>
+  <li>Duplicated Firestore query logic — the same 'find users by skill overlap' query could appear in different parts of the application.</li>
+  <li>No clear contract for what data operations the application requires, making it difficult to mock the database during testing.</li>
+  <li>FR10 (Account Deletion) required touching multiple files to gather all user-related collections, lacking a single origin for 'all user data operations'.</li>
+</ul>
+This violates the Dependency Inversion Principle and makes the data layer difficult to test or change independently of the UI.</p>
+
+<h3>3.2 Pattern Overview</h3>
+<ul>
+  <li><strong>Pattern Name:</strong> Repository</li>
+  <li><strong>Category:</strong> Architectural / Structural Data Access</li>
+  <li><strong>Intent:</strong> Encapsulate all data access logic behind a centralized layer/interface, decoupling domain/business logic from the data source provider.</li>
+  <li><strong>Applied To:</strong> FR1, FR2, FR7, FR8, FR9, FR10 — all features requiring user data read/write operations.</li>
+</ul>
+
+<h3>3.3 Application in Swaply Architecture</h3>
+<p>A central javascript module <code>UserRepository.js</code> is introduced containing all user-related data operations, formally replacing scattered service calls. Screen components depend only on the exported <code>UserRepository</code> functions — never on <code>firebaseConfig.js</code> imports directly.<br><br>
+<strong>Architecture change summary:</strong>
+<ul>
+  <li><strong>Before:</strong> <code>ProfileScreen</code> → <code>import { db } from '../services/firebaseConfig'</code> → <code>db.collection('users').doc(uid).get()</code>.</li>
+  <li><strong>After:</strong> <code>ProfileScreen</code> → <code>UserRepository.getUserById(uid)</code>.</li>
+  <li>The <code>/src/services/</code> folder structurally isolates database interaction. <code>firebaseConfig.js</code> is wrapped by <code>UserRepository.js</code>.</li>
+  <li>FR10 <code>deleteUser(uid)</code> now calls a single repository method that atomically deletes the user document, all match documents, and all chat subcollections.</li>
+</ul></p>
+
+<h3>3.4 UML Class Diagram</h3>
+
+<img class="mermaid-img" src="designs/repository_uml.svg" alt="Repository UML" />
+<p><em>Relationship: <code>FirestoreUserRepository</code> fulfills the data access contract. Application controllers and services interact with data strictly through this centralized API (Dependency Inversion).</em></p>
+
+<h3>3.5 Design Decision</h3>
+<p><strong>Why Repository was chosen:</strong><br>
+The Swaply project uses Firebase as its sole backend, but tying screen logic tightly to the Firestore SDK restricts testing capabilities and violates Separation of Concerns. By placing all data access behind <code>UserRepository.js</code>, the migration/refactoring surface is reduced to a single module.<br>
+Additionally, the Repository pattern enables Jest mock implementations to be injected during unit tests, removing the need to connect to a live Firestore instance for every screen test — directly supporting the QA Plan's goal of automated unit testing.</p>
+
+<p><strong>Architectural location:</strong><br>
+The implementation resides in <code>/src/services/UserRepository.js</code>. Firebase instances are privately scoped within this module and never exposed to the UI screens.</p>
+
+<table>
+  <thead><tr><th>Quality Factor</th><th>Metric / Criteria</th><th>Target Value</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Maintainability</strong></td><td>All Firestore-specific code is isolated to Repository. Replacing Firestore requires modifying only one file.</td><td>0 direct Firebase SDK imports in <code>/src/screens/</code>.</td></tr>
+    <tr><td><strong>Testability</strong></td><td>Repository methods can be mocked in Jest. FR10 &amp; FR8 can be fully tested without a live DB connection.</td><td>> 80% code coverage on all repository methods (Jest).</td></tr>
+    <tr><td><strong>Security (NFR2)</strong></td><td>Firebase Security Rules are validated at a single layer. The repository is the only place allowed to write to users.</td><td>0 unauthorized write paths outside the Repository layer.</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>4. Summary of Design Pattern Decisions</h2>
+
+<table>
+  <thead><tr><th>Pattern</th><th>Problem Solved</th><th>Quality Factor</th><th>Measurable Criterion</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Observer</strong></td><td>Tight coupling between UI screens and Firestore listeners; duplicated event handling.</td><td>Maintainability, Performance, Testability</td><td>≤1 Firestore listener/collection; all methods Jest-tested.</td></tr>
+    <tr><td><strong>Repository</strong></td><td>Scattered Firebase SDK calls across screens; no abstraction for data access/testing.</td><td>Maintainability, Testability, Security</td><td>0 direct Firebase imports outside services layer; >80% coverage.</td></tr>
+  </tbody>
+</table>
+
+<p>Both patterns together enforce a clean layered architecture: UI screens depend on abstractions and central services, services own all side effects, and the concrete Firebase implementations are isolated. This directly satisfies NFR2 (Security), NFR1 (Performance), and the maintainability criteria defined in the QA Plan.</p>
+
+</body>
+</html>
